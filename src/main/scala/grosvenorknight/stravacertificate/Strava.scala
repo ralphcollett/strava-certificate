@@ -1,23 +1,31 @@
 package grosvenorknight.stravacertificate
 
-import kiambogo.scrava.ScravaClient
-import kiambogo.scrava.models.AthleteSummary
+import argonaut.Argonaut._
+import argonaut._
+import dispatch.Defaults._
+import dispatch._
 
-import scala.util.Try
 import scalaz._
-import Scalaz._
 
 class Strava(accessToken: String) {
 
-  val client = new ScravaClient(accessToken)
+  val authString = s"Bearer $accessToken"
 
-  def athlete(id: Int): AthleteRetrievalError \/ AthleteSummary = {
-    Try(client.retrieveAthlete(Some(id))) match {
-      case scala.util.Success(athlete) => athlete.leftMap(_ => new AthleteRetrievalError(s"Could not retrieve $id")).disjunction
-      case scala.util.Failure(f) => new AthleteRetrievalError(f.getMessage).left[AthleteSummary]
-    }
-
+  def activity(id: Int): Future[ActivityRetrievalError \/ Activity] = {
+    val svc = url(s"https://www.strava.com/api/v3/activities/$id").addHeader("Authorization", authString)
+    for (response <- Http(svc OK as.String)) yield response.decodeEither[Activity].leftMap(ActivityRetrievalError)
   }
-}
 
-case class AthleteRetrievalError(message: String)
+  case class Activity(id: Int, name: String, time: Int, activityType: String)
+
+  implicit def ActivityDecodeJson: DecodeJson[Activity] =
+    DecodeJson(c => for {
+      id <- (c --\ "id").as[Int]
+      name <- (c --\ "name").as[String]
+      time <- (c --\ "elapsed_time").as[Int]
+      activityType <- (c --\ "type").as[String]
+    } yield Activity(id, name, time, activityType))
+
+  case class ActivityRetrievalError(message: String)
+
+}
