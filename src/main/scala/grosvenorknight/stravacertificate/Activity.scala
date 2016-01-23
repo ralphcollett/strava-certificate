@@ -1,17 +1,17 @@
 package grosvenorknight.stravacertificate
 
 import argonaut.DecodeJson
-import scala.concurrent.duration._
+import org.joda.time.Duration
 
-case class Activity(id: Int, name: String, duration: Duration, activityType: String, athleteId: Int)
+case class Activity(id: Int, name: String, distanceInMetres: Float, duration: Duration, activityType: String)
 
 object Activity {
   implicit def ActivityDecodeJson: DecodeJson[Activity] =
     DecodeJson(c => for {
       id <- (c --\ "id").as[Int]
       name <- (c --\ "name").as[String]
+      distance <- (c --\ "distance").as[Float]
       durationInSeconds <- (c --\ "elapsed_time").as[Int]
       activityType <- (c --\ "type").as[String]
-      athleteId <- (c --\ "athlete" --\ "id").as[Int]
-    } yield Activity(id, name, durationInSeconds seconds, activityType, athleteId))
+    } yield Activity(id, name, distance, Duration.standardSeconds(durationInSeconds), activityType))
 }

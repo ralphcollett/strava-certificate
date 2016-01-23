@@ -1,5 +1,10 @@
 package grosvenorknight.stravacertificate
 
+import org.joda.time.DateTime
+import org.joda.time.format.PeriodFormatterBuilder
+
+import scalaz.{-\/, \/-}
+
 
 object Main extends App {
 
@@ -8,13 +13,26 @@ object Main extends App {
   val accessToken = args(0)
   val client = new Strava(accessToken)
 
-  for (futureActivity <- client.activity(417548680)) yield {
-    for (activity <- futureActivity) yield {
-      for (futureAthlete <- client.athlete(activity.athleteId)) yield {
-        for (athlete <- futureAthlete) yield {
-          println(s"${activity.name} completed by ${athlete.firstName} ${athlete.surname} in ${activity.duration}")
-        }
-      }
+
+  val formatter = new PeriodFormatterBuilder()
+    .appendHours()
+    .appendSuffix(":")
+    .appendMinutes()
+    .appendSuffix(":")
+    .appendSeconds()
+    .toFormatter
+
+  def format(activity: Activity) =
+    s"${activity.name}" +
+      s" - ${BigDecimal(activity.distanceInMetres / 1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)} km" +
+      s" - ${formatter.print(activity.duration.toPeriod)}"
+
+  for {
+    response <- client.activities(Some(DateTime.now.minusDays(7)), Some(DateTime.now))
+  } yield {
+    response match {
+      case \/-(activities) => println(activities.map(format).mkString("\n\n"))
+      case -\/(error) => println(s"error $error")
     }
   }
 }
