@@ -1,9 +1,5 @@
 package grosvenorknight.stravacertificate
 
-import dispatch.Future
-
-import scalaz.\/
-
 
 object Main extends App {
 
@@ -11,8 +7,14 @@ object Main extends App {
 
   val accessToken = args(0)
   val client = new Strava(accessToken)
-  val future: Future[\/[client.ActivityRetrievalError, client.Activity]] = client.activity(417548680)
-  for (dis <- future) yield {
-    for (activity <- dis) yield println(activity)
+
+  for (futureActivity <- client.activity(417548680)) yield {
+    for (activity <- futureActivity) yield {
+      for (futureAthlete <- client.athlete(activity.athleteId)) yield {
+        for (athlete <- futureAthlete) yield {
+          println(s"${activity.name} completed by ${athlete.firstName} ${athlete.surname} in ${activity.duration}")
+        }
+      }
+    }
   }
 }
