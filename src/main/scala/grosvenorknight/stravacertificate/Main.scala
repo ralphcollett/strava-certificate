@@ -15,7 +15,9 @@ object Main extends App {
 
 
   val formatter = new PeriodFormatterBuilder()
+    .minimumPrintedDigits(2)
     .appendHours()
+    .printZeroAlways()
     .appendSuffix(":")
     .appendMinutes()
     .appendSuffix(":")
@@ -31,8 +33,8 @@ object Main extends App {
     response <- client.activities(Some(DateTime.now.minusDays(7)), Some(DateTime.now))
   } yield {
     response match {
-      case \/-(activities) => println(activities.map(format).mkString("\n\n"))
-      case -\/(error) => println(s"error $error")
+      case \/-(activities) => activities.reverse.map(format).mkString("\n\n")
+      case -\/(error) => s"error $error"
     }
   }
 }
