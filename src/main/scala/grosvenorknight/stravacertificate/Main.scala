@@ -29,7 +29,7 @@ object Main extends App {
       s" - ${BigDecimal(activity.distanceInMetres / 1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)} km" +
       s" - ${formatter.print(activity.duration.toPeriod)}"
 
-  for {
+  val output = for {
     response <- client.activities(Some(DateTime.now.minusDays(7)), Some(DateTime.now))
   } yield {
     response match {
@@ -37,4 +37,5 @@ object Main extends App {
       case -\/(error) => s"error $error"
     }
   }
+  output.foreach(println)
 }
