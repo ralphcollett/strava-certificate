@@ -33,7 +33,8 @@ object Main extends App {
     response <- client.activities(Some(DateTime.now.minusDays(7)), Some(DateTime.now))
   } yield {
     response match {
-      case \/-(activities) => activities.reverse.map(format).mkString("\n\n")
+      case \/-(activities) =>
+        activities.filter(_.activityType == "Run").reverse.map(format).mkString("\n\n")
       case -\/(error) => s"error $error"
     }
   }
